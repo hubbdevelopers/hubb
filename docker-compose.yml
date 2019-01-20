@@ -9,12 +9,13 @@ services:
      - MYSQL_PASSWORD=test
      - MYSQL_DATABASE=test
      - MYSQL_HOST=db
+     - SECRETS_FILE=/hubb/secrets/serviceAccountKey.json
     build: .
     image: asia.gcr.io/fleet-bongo-142015/go_app
     container_name: go_app
     ports:
       - "8080:8080"
-    command: fresh -c /go/fresh.conf
+    command: fresh -c /hubb/fresh.conf
     depends_on:
       - "db"
   

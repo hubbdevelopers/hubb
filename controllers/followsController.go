@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"main/models"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hubbdevelopers/hubb/models"
 )
 
 func GetUserFollowings(c *gin.Context) {

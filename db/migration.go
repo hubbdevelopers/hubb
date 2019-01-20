@@ -1,7 +1,7 @@
 package db
 
 import (
-	"main/models"
+	"github.com/hubbdevelopers/hubb/models"
 )
 
 func Migrate() {

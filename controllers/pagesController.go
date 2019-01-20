@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"fmt"
-	"main/models"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hubbdevelopers/hubb/models"
 )
 
 func GetPages(c *gin.Context) {

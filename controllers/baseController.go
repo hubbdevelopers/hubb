@@ -1,8 +1,7 @@
 package controllers
 
 import (
-	"main/db"
-
+	"github.com/hubbdevelopers/hubb/db"
 	"github.com/jinzhu/gorm"
 )
 

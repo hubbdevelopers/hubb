@@ -2,10 +2,10 @@ package controllers
 
 import (
 	"fmt"
-	"main/models"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hubbdevelopers/hubb/models"
 )
 
 func GetUsers(c *gin.Context) {

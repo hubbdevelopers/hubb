@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"main/controllers"
-	"main/db"
+	"os"
 	"reflect"
 	"strings"
 	"time"
 
 	firebase "firebase.google.com/go"
-	"google.golang.org/api/option"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/hubbdevelopers/hubb/controllers"
+	"github.com/hubbdevelopers/hubb/db"
 	"github.com/jinzhu/gorm"
+	"google.golang.org/api/option"
 )
 
 type Product struct {
@@ -91,7 +91,7 @@ func main() {
 func auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		opt := option.WithCredentialsFile("/go/secrets/serviceAccountKey.json")
+		opt := option.WithCredentialsFile(os.Getenv("SECRETS_FILE"))
 		app, err := firebase.NewApp(context.Background(), nil, opt)
 		if err != nil {
 			log.Fatalf("error initializing app: %v\n", err)
