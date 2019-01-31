@@ -14,7 +14,7 @@ spec:
         app: hubb-app
     spec:
       containers:
-      - image: hubbdevelopers/hubb_test:latest
+      - image: asia.gcr.io/fleet-bongo-142015/go_app:latest
         name: hubb-app
         env:
         - name: GOPATH
@@ -24,15 +24,75 @@ spec:
         - name: MYSQL_ROOT_PASSWORD
           value: password
         - name: MYSQL_USER
-          value: test
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-credentials
+              key: username
         - name: MYSQL_PASSWORD
-          value: test
+          valueFrom:
+            secretKeyRef:
+              name: cloudsql-db-credentials
+              key: password
         - name: MYSQL_DATABASE
           value: test
         - name: MYSQL_HOST
-          value: mysql
+          value: 127.0.0.1
         ports:
         - containerPort: 8080
           name: hubb-app
+
+
+      - image: gcr.io/cloudsql-docker/gce-proxy:1.09
+        name: cloudsql-proxy
+        command: ["/cloud_sql_proxy", "--dir=/cloudsql",
+                  "-instances=fleet-bongo-142015:asia-east1:testdb=tcp:3306",
+                  "-credential_file=/secrets/cloudsql/credentials.json"]
+        volumeMounts:
+          - name: cloudsql-instance-credentials
+            mountPath: /secrets/cloudsql
+            readOnly: true
+          - name: ssl-certs
+            mountPath: /etc/ssl/certs
+          - name: cloudsql
+            mountPath: /cloudsql
+
       imagePullSecrets:
         - name: regcred
+      volumes:
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-instance-credentials
+        - name: ssl-certs
+          hostPath:
+            path: /etc/ssl/certs
+        - name: cloudsql
+          emptyDir:
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hubb-app-service
+  labels:
+    app: hubb-app-service
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: hubb-app
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: basic-ingress
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: https-ip
+    ingress.gcp.kubernetes.io/pre-shared-cert: https-cert
+spec:
+  backend:
+    serviceName: hubb-app-service
+    servicePort: 8080
