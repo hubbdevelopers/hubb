@@ -13,6 +13,8 @@ services:
     build: .
     image: asia.gcr.io/fleet-bongo-142015/go_app
     container_name: go_app
+    volumes:
+      - .:/hubb
     ports:
       - "8080:8080"
     command: fresh -c /hubb/fresh.conf
