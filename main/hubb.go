@@ -71,6 +71,7 @@ func main() {
 	r.POST("/pages", controllers.CreatePage)
 	r.DELETE("/pages/:id", controllers.DeletePage)
 	r.PUT("/pages/:id", controllers.UpdatePage)
+	r.GET("/recentpages", controllers.GetRecentPages)
 
 	r.GET("/comments", controllers.GetComments)
 	r.POST("/comments", controllers.CreateComment)

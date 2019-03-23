@@ -26,6 +26,16 @@ func GetPages(c *gin.Context) {
 	})
 }
 
+func GetRecentPages(c *gin.Context) {
+
+	var pages []models.Page
+	orm.Order("created_at").Find(&pages)
+
+	c.JSON(200, gin.H{
+		"data": pages,
+	})
+}
+
 func GetPage(c *gin.Context) {
 
 	id := c.Param("id")
