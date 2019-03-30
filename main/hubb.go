@@ -14,17 +14,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hubbdevelopers/hubb/controllers"
 	"github.com/hubbdevelopers/hubb/db"
-	"github.com/jinzhu/gorm"
+	"github.com/joho/godotenv"
 	"google.golang.org/api/option"
 )
 
-type Product struct {
-	gorm.Model
-	Code  string
-	Price uint
-}
-
 func main() {
+
+	godotenv.Load()
 
 	db.Connect()
 	defer db.Close()
