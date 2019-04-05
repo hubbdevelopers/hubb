@@ -27,8 +27,6 @@ func main() {
 
 	db.Migrate()
 
-	controllers.Init()
-
 	r := gin.Default()
 
 	r.Use(auth())

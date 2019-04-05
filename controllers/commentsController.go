@@ -1,24 +1,42 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hubbdevelopers/hubb/models"
+	"github.com/hubbdevelopers/hubb/repositories"
 )
 
 func GetComments(c *gin.Context) {
 
-	pageId := c.Query("pageid")
+	pageID := c.Query("pageid")
+	userID := c.Query("userid")
 
-	var comments []models.Comment
+	repo := repositories.NewCommentRepository()
+	var comments *[]models.Comment
 
-	if pageId != "" {
-		orm.Where("page_id = ?", pageId).Find(&comments)
-
+	if pageID != "" {
+		pageIDInt, err := strconv.Atoi(pageID)
+		if err != nil {
+			fmt.Print(err)
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		comments = repo.GetByPageID(pageIDInt)
+	} else if userID != "" {
+		userIDInt, err := strconv.Atoi(userID)
+		if err != nil {
+			fmt.Print(err)
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		comments = repo.GetByUserID(userIDInt)
 	} else {
-		comments = []models.Comment{}
-		orm.Find(&comments)
+		c.JSON(400, gin.H{"error": errors.New("get comments need pageid or userid")})
+		return
 	}
 
 	c.JSON(200, gin.H{
@@ -29,8 +47,8 @@ func GetComments(c *gin.Context) {
 
 type createCommentStruct struct {
 	Text   string `json:"text" binding:"required"`
-	UserId int    `json:"userId" binding:"required"`
-	PageId int    `json:"pageId" binding:"required"`
+	UserID int    `json:"userId" binding:"required"`
+	PageID int    `json:"pageId" binding:"required"`
 }
 
 func CreateComment(c *gin.Context) {
@@ -40,22 +58,26 @@ func CreateComment(c *gin.Context) {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
+	repo := repositories.NewCommentRepository()
+	comment := repo.Create(json.UserID, json.PageID, json.Text)
 
-	comment := models.Comment{Text: json.Text, UserId: json.UserId, PageId: json.PageId}
-	orm.Create(&comment)
 	c.JSON(200, gin.H{
 		"data": comment,
 	})
 }
 
 func DeleteComment(c *gin.Context) {
-	id := c.Param("id")
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
 
-	var comment models.Comment
-	orm.First(&comment, id)
-	orm.Delete(&comment)
+	repo := repositories.NewCommentRepository()
+	repo.Delete(id)
 
 	c.JSON(200, gin.H{
-		"data": comment,
+		"data": "deleted",
 	})
 }

@@ -3,22 +3,40 @@ package controllers
 import (
 	"fmt"
 
+	"github.com/hubbdevelopers/hubb/repositories"
+
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/hubbdevelopers/hubb/models"
 )
 
 func GetPages(c *gin.Context) {
 
-	userId := c.Query("userid")
-	communityId := c.Query("communityid")
+	userID := c.Query("userid")
+	communityID := c.Query("communityid")
 
-	var pages []models.Page
-	if userId != "" {
-		orm.Where("owner_id = ?", userId).Where("owner_type = ?", "users").Find(&pages)
-	} else if communityId != "" {
-		orm.Where("owner_id = ?", communityId).Where("owner_type = ?", "communities").Find(&pages)
+	repo := repositories.NewPageRepository()
+
+	var pages *[]models.Page
+	if userID != "" {
+		userIDInt, err := strconv.Atoi(userID)
+		if err != nil {
+			fmt.Print(err)
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		pages = repo.GetByUserID(userIDInt)
+	} else if communityID != "" {
+		communityIDInt, err := strconv.Atoi(communityID)
+		if err != nil {
+			fmt.Print(err)
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		pages = repo.GetByCommunityID(communityIDInt)
 	} else {
-		orm.Find(&pages)
+		pages = repo.GetAll()
 	}
 
 	c.JSON(200, gin.H{
@@ -28,8 +46,25 @@ func GetPages(c *gin.Context) {
 
 func GetRecentPages(c *gin.Context) {
 
-	var pages []models.Page
-	orm.Order("created_at").Find(&pages)
+	repo := repositories.NewPageRepository()
+	pages := repo.GetRecentPages()
+
+	c.JSON(200, gin.H{
+		"data": pages,
+	})
+}
+
+func GetTimeline(c *gin.Context) {
+
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	repo := repositories.NewPageRepository()
+	pages := repo.GetTimeLine(userID)
 
 	c.JSON(200, gin.H{
 		"data": pages,
@@ -38,9 +73,14 @@ func GetRecentPages(c *gin.Context) {
 
 func GetPage(c *gin.Context) {
 
-	id := c.Param("id")
-	var page models.Page
-	orm.First(&page, id)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	repo := repositories.NewPageRepository()
+	page := repo.GetByID(id)
 	c.JSON(200, gin.H{
 		"data": page,
 	})
@@ -48,7 +88,7 @@ func GetPage(c *gin.Context) {
 
 type newPage struct {
 	Name      string `json:"name" binding:"required"`
-	OwnerId   int    `json:"ownerId" binding:"required"`
+	OwnerID   int    `json:"ownerId" binding:"required"`
 	OwnerType string `json:"ownerType" binding:"required"`
 }
 
@@ -60,22 +100,26 @@ func CreatePage(c *gin.Context) {
 		return
 	}
 
-	page := models.Page{Name: json.Name, OwnerId: json.OwnerId, OwnerType: json.OwnerType}
-	orm.Create(&page)
+	repo := repositories.NewPageRepository()
+	page := repo.Create(json.Name, json.OwnerID, json.OwnerType)
 	c.JSON(200, gin.H{
 		"data": page,
 	})
 }
 
 func DeletePage(c *gin.Context) {
-	id := c.Param("id")
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
 
-	var page models.Page
-	orm.First(&page, id)
-	orm.Delete(&page)
+	repo := repositories.NewPageRepository()
+	repo.Delete(id)
 
 	c.JSON(200, gin.H{
-		"data": page,
+		"data": "deleted",
 	})
 }
 
@@ -94,15 +138,15 @@ func UpdatePage(c *gin.Context) {
 		return
 	}
 
-	id := c.Param("id")
-	var page models.Page
-	orm.First(&page, id)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
 
-	page.Name = json.Name
-	page.Content = json.Content
-	page.Image = json.Image
-	page.Draft = json.Draft
-	orm.Save(&page)
+	repo := repositories.NewPageRepository()
+	page := repo.Update(id, json.Name, json.Content, json.Image, json.Draft)
 
 	c.JSON(200, gin.H{
 		"data": page,

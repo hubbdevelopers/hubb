@@ -2,10 +2,10 @@ package controllers
 
 import (
 	"fmt"
-	"time"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hubbdevelopers/hubb/models"
+	"github.com/hubbdevelopers/hubb/repositories"
 )
 
 func GetUsers(c *gin.Context) {
@@ -13,22 +13,20 @@ func GetUsers(c *gin.Context) {
 	accountId := c.Query("accountid")
 	uId := c.Query("uid")
 
+	repo := repositories.NewUserRepository()
+
 	if accountId != "" {
-		var user models.User
-		orm.Where("account_id = ?", accountId).First(&user)
+		user := repo.GetByAccountID(accountId)
 		c.JSON(200, gin.H{
 			"data": user,
 		})
 	} else if uId != "" {
-		var user models.User
-		orm.Where("uid = ?", uId).First(&user)
+		user := repo.GetByUID(uId)
 		c.JSON(200, gin.H{
 			"data": user,
 		})
 	} else {
-		users := []models.User{}
-		orm.Find(&users)
-
+		users := repo.GetAll()
 		c.JSON(200, gin.H{
 			"data": users,
 		})
@@ -37,56 +35,19 @@ func GetUsers(c *gin.Context) {
 
 func GetUser(c *gin.Context) {
 
-	id := c.Param("id")
-	var user models.User
-	orm.First(&user, id)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	repo := repositories.NewUserRepository()
+	user := repo.GetByID(id)
 
 	c.JSON(200, gin.H{
 		"data": user,
 	})
-}
-
-func GetTimeline(c *gin.Context) {
-
-	id := c.Param("id")
-	fmt.Println(id)
-
-	var user models.User
-	orm.First(&user, id)
-
-	fmt.Println(user)
-	var follows []models.Follow
-	orm.Model(&user).Related(&follows)
-
-	timeline := []models.Page{}
-	for _, follow := range follows {
-
-		if follow.FollowingType == "user" {
-			var followingUser models.User
-			orm.First(&followingUser, follow.FollowingId)
-
-			var pages []models.Page
-			orm.Model(&followingUser).Related(&pages, "Pages")
-
-			timeline = append(timeline, pages...)
-
-		} else if follow.FollowingType == "community" {
-			var followingCommunity models.Community
-			orm.First(&followingCommunity, follow.FollowingId)
-
-			var pages []models.Page
-			orm.Model(&followingCommunity).Related(&pages, "Pages")
-
-			timeline = append(timeline, pages...)
-		}
-
-	}
-	fmt.Println(timeline)
-
-	c.JSON(200, gin.H{
-		"data": timeline,
-	})
-
 }
 
 type signupStruct struct {
@@ -103,15 +64,16 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	user := models.User{UID: json.Uid}
-	orm.Create(&user)
+	repo := repositories.NewUserRepository()
+	user := repo.Create(json.Uid)
+
 	c.JSON(200, gin.H{
 		"data": user,
 	})
 }
 
 type initUserStruct struct {
-	AccountId string `json:"account_id"binding:"required"`
+	AccountID string `json:"account_id" binding:"required"`
 	Name      string `json:"name" binding:"required"`
 }
 
@@ -123,14 +85,15 @@ func InitializeUser(c *gin.Context) {
 		return
 	}
 
-	id := c.Param("id")
-	var user models.User
-	orm.First(&user, id)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
 
-	user.AccountId = json.AccountId
-	user.Name = json.Name
-
-	orm.Save(&user)
+	repo := repositories.NewUserRepository()
+	user := repo.Initilize(id, json.AccountID, json.Name)
 
 	c.JSON(200, gin.H{
 		"data": user,
@@ -138,7 +101,7 @@ func InitializeUser(c *gin.Context) {
 }
 
 type updateImageStruct struct {
-	Image string `json:"image"binding:"required"`
+	Image string `json:"image" binding:"required"`
 }
 
 func UpdateImage(c *gin.Context) {
@@ -149,13 +112,15 @@ func UpdateImage(c *gin.Context) {
 		return
 	}
 
-	id := c.Param("id")
-	var user models.User
-	orm.First(&user, id)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
 
-	user.Image = json.Image
-
-	orm.Save(&user)
+	repo := repositories.NewUserRepository()
+	user := repo.UpdateImage(id, json.Image)
 
 	c.JSON(200, gin.H{
 		"data": user,
@@ -180,41 +145,14 @@ func UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	id := c.Param("id")
-	var user models.User
-	orm.First(&user, id)
-
-	if json.Name != "" {
-		user.Name = json.Name
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
 	}
-
-	if json.Description != "" {
-		user.Description = json.Description
-	}
-
-	if json.Homepage != "" {
-		user.Homepage = json.Homepage
-	}
-
-	if json.Facebook != "" {
-		user.Facebook = json.Facebook
-	}
-
-	if json.Twitter != "" {
-		user.Twitter = json.Twitter
-	}
-
-	if json.Instagram != "" {
-		user.Instagram = json.Instagram
-	}
-
-	if json.Birthday != "" {
-		layout := "2006-01-02"
-		t, _ := time.Parse(layout, json.Birthday)
-		user.Birthday = &t
-	}
-
-	orm.Save(&user)
+	repo := repositories.NewUserRepository()
+	user := repo.UpdateProfile(id, json.Name, json.Description, json.Homepage, json.Facebook, json.Twitter, json.Instagram, json.Birthday)
 
 	c.JSON(200, gin.H{
 		"data": user,

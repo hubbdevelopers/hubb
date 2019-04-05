@@ -5,6 +5,7 @@ require (
 	github.com/gin-contrib/cors v0.0.0-20190101123304-5e7acb10687f
 	github.com/gin-gonic/gin v1.3.0
 	github.com/go-sql-driver/mysql v1.4.1 // indirect
+	github.com/google/wire v0.2.1
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
 	github.com/howeyc/fsnotify v0.9.0 // indirect
 	github.com/jinzhu/gorm v1.9.2

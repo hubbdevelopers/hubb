@@ -2,6 +2,9 @@ package controllers
 
 import (
 	"fmt"
+	"strconv"
+
+	"github.com/hubbdevelopers/hubb/repositories"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hubbdevelopers/hubb/models"
@@ -9,18 +12,29 @@ import (
 
 func GetLikes(c *gin.Context) {
 
-	pageId := c.Query("pageid")
-	userId := c.Query("userid")
+	repo := repositories.NewLikeRepository()
+	var likes *[]models.Like
 
-	var likes []models.Like
-
-	if pageId != "" {
-		orm.Where("page_id = ?", pageId).Find(&likes)
-	} else if userId != "" {
-		orm.Where("user_id = ?", userId).Find(&likes)
+	pageID := c.Query("pageid")
+	userID := c.Query("userid")
+	if pageID != "" {
+		pageIDInt, err := strconv.Atoi(pageID)
+		if err != nil {
+			fmt.Print(err)
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		likes = repo.GetByPageID(pageIDInt)
+	} else if userID != "" {
+		userIDInt, err := strconv.Atoi(userID)
+		if err != nil {
+			fmt.Print(err)
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		likes = repo.GetByUserID(userIDInt)
 	} else {
-		likes = []models.Like{}
-		orm.Find(&likes)
+		likes = repo.GetAll()
 	}
 
 	c.JSON(200, gin.H{
@@ -30,8 +44,8 @@ func GetLikes(c *gin.Context) {
 }
 
 type likeStruct struct {
-	UserId int `json:"userId" binding:"required"`
-	PageId int `json:"pageId" binding:"required"`
+	UserID int `json:"userId" binding:"required"`
+	PageID int `json:"pageId" binding:"required"`
 }
 
 func CreateLike(c *gin.Context) {
@@ -42,30 +56,30 @@ func CreateLike(c *gin.Context) {
 		return
 	}
 
-	var likeCount []models.Like
-	orm.Where("page_id = ?", json.PageId).Where("user_id = ?", json.UserId).Find(&likeCount)
-
-	if len(likeCount) > 0 {
-		c.JSON(421, gin.H{
-			"error": "already exists",
-		})
-	} else {
-		like := models.Like{UserId: json.UserId, PageId: json.PageId}
-		orm.Create(&like)
-		c.JSON(200, gin.H{
-			"data": like,
-		})
-	}
+	repo := repositories.NewLikeRepository()
+	likes := repo.Create(json.UserID, json.PageID)
+	c.JSON(200, gin.H{
+		"data": likes,
+	})
 }
 
 func DeleteLike(c *gin.Context) {
-	pageId := c.Query("pageid")
-	userId := c.Query("userid")
+	pageID, err := strconv.Atoi(c.Query("pageid"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	userID, err := strconv.Atoi(c.Query("userid"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
 
-	var like models.Like
-	orm.Where("page_id = ?", pageId).Where("user_id = ?", userId).First(&like)
-	orm.Delete(&like)
+	repo := repositories.NewLikeRepository()
+	repo.Delete(userID, pageID)
 	c.JSON(200, gin.H{
-		"data": like,
+		"data": "deleted",
 	})
 }

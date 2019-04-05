@@ -1,74 +1,130 @@
 package controllers
 
 import (
+	"fmt"
 	"strconv"
 
+	"github.com/hubbdevelopers/hubb/repositories"
+
 	"github.com/gin-gonic/gin"
-	"github.com/hubbdevelopers/hubb/models"
 )
 
 func GetUserFollowings(c *gin.Context) {
-	userId, _ := strconv.Atoi(c.Param("id"))
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
 
-	var follows []models.Follow
-	orm.Where("user_id = ?", userId).Find(&follows)
+	repo := repositories.NewFollowRepository()
+	followings := repo.GetFollowingsByUserID(userID)
+
 	c.JSON(200, gin.H{
-		"data": follows,
+		"data": followings,
 	})
 }
 
 func GetUserFollowers(c *gin.Context) {
-	userId, _ := strconv.Atoi(c.Param("id"))
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
 
-	var follows []models.Follow
-	orm.Where("following_id = ?", userId).Find(&follows)
+	repo := repositories.NewFollowRepository()
+	followers := repo.GetFollowersByUserID(userID)
+
 	c.JSON(200, gin.H{
-		"data": follows,
+		"data": followers,
 	})
 }
 
 func FollowUser(c *gin.Context) {
-	userId, _ := strconv.Atoi(c.Param("id"))
-	followingId, _ := strconv.Atoi(c.Param("followingid"))
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	followingID, err := strconv.Atoi(c.Param("followingid"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
 
-	follow := models.Follow{UserId: userId, FollowingId: followingId, FollowingType: "user"}
-	orm.Create(&follow)
+	repo := repositories.NewFollowRepository()
+	follow := repo.CreateFollowUser(userID, followingID)
+
 	c.JSON(200, gin.H{
 		"data": follow,
 	})
 }
 
 func UnfollowUser(c *gin.Context) {
-	userId, _ := strconv.Atoi(c.Param("id"))
-	followingId, _ := strconv.Atoi(c.Param("followingid"))
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	followingID, err := strconv.Atoi(c.Param("followingid"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
 
-	var follow models.Follow
-	orm.Where("user_id = ?", userId).Where("following_id = ?", followingId).Where("following_type = ?", "user").First(&follow)
-	orm.Delete(&follow)
+	repo := repositories.NewFollowRepository()
+	repo.DeleteFollowUser(userID, followingID)
+
 	c.JSON(200, gin.H{
-		"data": follow,
+		"data": "deleted",
 	})
 }
 
 func FollowCommunity(c *gin.Context) {
-	userId, _ := strconv.Atoi(c.Param("id"))
-	followingId, _ := strconv.Atoi(c.Param("followingid"))
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	followingID, err := strconv.Atoi(c.Param("followingid"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
 
-	follow := models.Follow{UserId: userId, FollowingId: followingId, FollowingType: "community"}
-	orm.Create(&follow)
+	repo := repositories.NewFollowRepository()
+	follow := repo.CreateFollowCommunity(userID, followingID)
+
 	c.JSON(200, gin.H{
 		"data": follow,
 	})
 }
 
 func UnfollowCommunity(c *gin.Context) {
-	userId, _ := strconv.Atoi(c.Param("id"))
-	followingId, _ := strconv.Atoi(c.Param("followingid"))
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	followingID, err := strconv.Atoi(c.Param("followingid"))
+	if err != nil {
+		fmt.Print(err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
 
-	var follow models.Follow
-	orm.Where("user_id = ?", userId).Where("following_id = ?", followingId).Where("following_type = ?", "community").First(&follow)
-	orm.Delete(&follow)
+	repo := repositories.NewFollowRepository()
+	repo.DeleteFollowCommunity(userID, followingID)
+
 	c.JSON(200, gin.H{
-		"data": follow,
+		"data": "deleted",
 	})
 }
