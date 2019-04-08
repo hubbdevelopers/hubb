@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hubbdevelopers/hubb/db"
 	"github.com/hubbdevelopers/hubb/repositories"
 )
 
@@ -13,7 +14,7 @@ func GetUsers(c *gin.Context) {
 	accountId := c.Query("accountid")
 	uId := c.Query("uid")
 
-	repo := repositories.NewUserRepository()
+	repo := repositories.NewUserRepository(db.GetORM())
 
 	if accountId != "" {
 		user := repo.GetByAccountID(accountId)
@@ -42,7 +43,7 @@ func GetUser(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewUserRepository()
+	repo := repositories.NewUserRepository(db.GetORM())
 	user := repo.GetByID(id)
 
 	c.JSON(200, gin.H{
@@ -64,7 +65,7 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewUserRepository()
+	repo := repositories.NewUserRepository(db.GetORM())
 	user := repo.Create(json.Uid)
 
 	c.JSON(200, gin.H{
@@ -92,7 +93,7 @@ func InitializeUser(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewUserRepository()
+	repo := repositories.NewUserRepository(db.GetORM())
 	user := repo.Initilize(id, json.AccountID, json.Name)
 
 	c.JSON(200, gin.H{
@@ -119,7 +120,7 @@ func UpdateImage(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewUserRepository()
+	repo := repositories.NewUserRepository(db.GetORM())
 	user := repo.UpdateImage(id, json.Image)
 
 	c.JSON(200, gin.H{
@@ -151,7 +152,7 @@ func UpdateProfile(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	repo := repositories.NewUserRepository()
+	repo := repositories.NewUserRepository(db.GetORM())
 	user := repo.UpdateProfile(id, json.Name, json.Description, json.Homepage, json.Facebook, json.Twitter, json.Instagram, json.Birthday)
 
 	c.JSON(200, gin.H{

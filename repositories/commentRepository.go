@@ -1,8 +1,8 @@
 package repositories
 
 import (
-	"github.com/hubbdevelopers/hubb/db"
 	"github.com/hubbdevelopers/hubb/models"
+	"github.com/jinzhu/gorm"
 )
 
 type CommentRepository interface {
@@ -12,36 +12,34 @@ type CommentRepository interface {
 	Delete(id int)
 }
 
-func NewCommentRepository() CommentRepository {
-	return dbCommentRepository{}
+func NewCommentRepository(db *gorm.DB) CommentRepository {
+	return dbCommentRepository{db: db}
 }
 
-type dbCommentRepository struct{}
+type dbCommentRepository struct {
+	db *gorm.DB
+}
 
-func (dbCommentRepository) GetByUserID(userID int) *[]models.Comment {
-	orm := db.GetORM()
+func (repo dbCommentRepository) GetByUserID(userID int) *[]models.Comment {
 	comments := []models.Comment{}
-	orm.Where("user_id = ?", userID).Find(&comments)
+	repo.db.Where("user_id = ?", userID).Find(&comments)
 	return &comments
 }
 
-func (dbCommentRepository) GetByPageID(pageID int) *[]models.Comment {
-	orm := db.GetORM()
+func (repo dbCommentRepository) GetByPageID(pageID int) *[]models.Comment {
 	comments := []models.Comment{}
-	orm.Where("pager_id = ?", pageID).Find(&comments)
+	repo.db.Where("page_id = ?", pageID).Find(&comments)
 	return &comments
 }
 
-func (dbCommentRepository) Create(userID, pageID int, text string) *models.Comment {
-	orm := db.GetORM()
+func (repo dbCommentRepository) Create(userID, pageID int, text string) *models.Comment {
 	comment := models.Comment{Text: text, UserId: userID, PageId: pageID}
-	orm.Create(&comment)
+	repo.db.Create(&comment)
 	return &comment
 }
 
-func (dbCommentRepository) Delete(id int) {
-	orm := db.GetORM()
+func (repo dbCommentRepository) Delete(id int) {
 	var comment models.Comment
-	orm.First(&comment, id)
-	orm.Delete(&comment)
+	repo.db.First(&comment, id)
+	repo.db.Delete(&comment)
 }

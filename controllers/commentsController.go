@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hubbdevelopers/hubb/db"
 	"github.com/hubbdevelopers/hubb/models"
 	"github.com/hubbdevelopers/hubb/repositories"
 )
@@ -15,7 +16,7 @@ func GetComments(c *gin.Context) {
 	pageID := c.Query("pageid")
 	userID := c.Query("userid")
 
-	repo := repositories.NewCommentRepository()
+	repo := repositories.NewCommentRepository(db.GetORM())
 	var comments *[]models.Comment
 
 	if pageID != "" {
@@ -58,7 +59,7 @@ func CreateComment(c *gin.Context) {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	repo := repositories.NewCommentRepository()
+	repo := repositories.NewCommentRepository(db.GetORM())
 	comment := repo.Create(json.UserID, json.PageID, json.Text)
 
 	c.JSON(200, gin.H{
@@ -74,7 +75,7 @@ func DeleteComment(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewCommentRepository()
+	repo := repositories.NewCommentRepository(db.GetORM())
 	repo.Delete(id)
 
 	c.JSON(200, gin.H{

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hubbdevelopers/hubb/db"
 	"github.com/hubbdevelopers/hubb/repositories"
 
 	"github.com/gin-gonic/gin"
@@ -12,7 +13,7 @@ import (
 
 func GetCommunities(c *gin.Context) {
 
-	repo := repositories.NewCommunityRepository()
+	repo := repositories.NewCommunityRepository(db.GetORM())
 	userID := c.Query("userid")
 	name := c.Query("name")
 
@@ -44,7 +45,7 @@ func GetCommunity(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	repo := repositories.NewCommunityRepository()
+	repo := repositories.NewCommunityRepository(db.GetORM())
 	community := repo.GetByID(id)
 
 	c.JSON(200, gin.H{
@@ -64,7 +65,7 @@ func CreateCommunity(c *gin.Context) {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	repo := repositories.NewCommunityRepository()
+	repo := repositories.NewCommunityRepository(db.GetORM())
 	community := repo.Create(json.UserID, json.Name)
 
 	c.JSON(200, gin.H{
@@ -80,7 +81,7 @@ func DeleteCommunity(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewCommunityRepository()
+	repo := repositories.NewCommunityRepository(db.GetORM())
 	repo.Delete(id)
 
 	c.JSON(200, gin.H{

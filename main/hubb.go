@@ -29,7 +29,7 @@ func main() {
 
 	r := gin.Default()
 
-	r.Use(auth())
+	// r.Use(auth())
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000"},

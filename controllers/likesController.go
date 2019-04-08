@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hubbdevelopers/hubb/db"
 	"github.com/hubbdevelopers/hubb/repositories"
 
 	"github.com/gin-gonic/gin"
@@ -12,7 +13,7 @@ import (
 
 func GetLikes(c *gin.Context) {
 
-	repo := repositories.NewLikeRepository()
+	repo := repositories.NewLikeRepository(db.GetORM())
 	var likes *[]models.Like
 
 	pageID := c.Query("pageid")
@@ -56,7 +57,7 @@ func CreateLike(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewLikeRepository()
+	repo := repositories.NewLikeRepository(db.GetORM())
 	likes := repo.Create(json.UserID, json.PageID)
 	c.JSON(200, gin.H{
 		"data": likes,
@@ -77,7 +78,7 @@ func DeleteLike(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewLikeRepository()
+	repo := repositories.NewLikeRepository(db.GetORM())
 	repo.Delete(userID, pageID)
 	c.JSON(200, gin.H{
 		"data": "deleted",

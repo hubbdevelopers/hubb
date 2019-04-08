@@ -1,8 +1,8 @@
 package repositories
 
 import (
-	"github.com/hubbdevelopers/hubb/db"
 	"github.com/hubbdevelopers/hubb/models"
+	"github.com/jinzhu/gorm"
 )
 
 type LikeRepository interface {
@@ -13,43 +13,40 @@ type LikeRepository interface {
 	Delete(userID, pageID int)
 }
 
-func NewLikeRepository() LikeRepository {
-	return dbLikeRepository{}
+func NewLikeRepository(db *gorm.DB) LikeRepository {
+	return dbLikeRepository{db: db}
 }
 
-type dbLikeRepository struct{}
+type dbLikeRepository struct {
+	db *gorm.DB
+}
 
-func (dbLikeRepository) GetAll() *[]models.Like {
-	orm := db.GetORM()
+func (repo dbLikeRepository) GetAll() *[]models.Like {
 	likes := []models.Like{}
-	orm.Find(&likes)
+	repo.db.Find(&likes)
 	return &likes
 }
 
-func (dbLikeRepository) GetByUserID(userID int) *[]models.Like {
-	orm := db.GetORM()
+func (repo dbLikeRepository) GetByUserID(userID int) *[]models.Like {
 	likes := []models.Like{}
-	orm.Where("user_id = ?", userID).Find(&likes)
+	repo.db.Where("user_id = ?", userID).Find(&likes)
 	return &likes
 }
 
-func (dbLikeRepository) GetByPageID(pageID int) *[]models.Like {
-	orm := db.GetORM()
+func (repo dbLikeRepository) GetByPageID(pageID int) *[]models.Like {
 	likes := []models.Like{}
-	orm.Where("page_id = ?", pageID).Find(&likes)
+	repo.db.Where("page_id = ?", pageID).Find(&likes)
 	return &likes
 }
 
-func (dbLikeRepository) Create(userID, pageID int) *models.Like {
-	orm := db.GetORM()
+func (repo dbLikeRepository) Create(userID, pageID int) *models.Like {
 	like := models.Like{UserId: userID, PageId: pageID}
-	orm.Create(&like)
+	repo.db.Create(&like)
 	return &like
 }
 
-func (dbLikeRepository) Delete(userID, pageID int) {
-	orm := db.GetORM()
+func (repo dbLikeRepository) Delete(userID, pageID int) {
 	var like models.Like
-	orm.Where("page_id = ?", pageID).Where("user_id = ?", userID).First(&like)
-	orm.Delete(&like)
+	repo.db.Where("page_id = ?", pageID).Where("user_id = ?", userID).First(&like)
+	repo.db.Delete(&like)
 }

@@ -2,6 +2,7 @@ module github.com/hubbdevelopers/hubb
 
 require (
 	firebase.google.com/go v3.6.0+incompatible
+	github.com/DATA-DOG/go-sqlmock v1.3.3
 	github.com/gin-contrib/cors v0.0.0-20190101123304-5e7acb10687f
 	github.com/gin-gonic/gin v1.3.0
 	github.com/go-sql-driver/mysql v1.4.1 // indirect

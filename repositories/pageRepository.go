@@ -1,8 +1,8 @@
 package repositories
 
 import (
-	"github.com/hubbdevelopers/hubb/db"
 	"github.com/hubbdevelopers/hubb/models"
+	"github.com/jinzhu/gorm"
 )
 
 type PageRepository interface {
@@ -17,53 +17,52 @@ type PageRepository interface {
 	Delete(id int)
 }
 
-func NewPageRepository() PageRepository {
-	return dbPageRepository{}
+func NewPageRepository(db *gorm.DB) PageRepository {
+	return dbPageRepository{db: db}
 }
 
-type dbPageRepository struct{}
+type dbPageRepository struct {
+	db *gorm.DB
+}
 
-func (dbPageRepository) GetAll() *[]models.Page {
-	orm := db.GetORM()
+func (repo dbPageRepository) GetAll() *[]models.Page {
 	pages := []models.Page{}
-	orm.Find(&pages)
+	repo.db.Find(&pages)
 	return &pages
 }
 
-func (dbPageRepository) GetRecentPages() *[]models.Page {
-	orm := db.GetORM()
+func (repo dbPageRepository) GetRecentPages() *[]models.Page {
 	pages := []models.Page{}
-	orm.Order("created_at").Find(&pages)
+	repo.db.Order("created_at").Find(&pages)
 	return &pages
 }
 
 // T0D0 リレーションを使う
-func (dbPageRepository) GetTimeLine(userID int) *[]models.Page {
-	orm := db.GetORM()
+func (repo dbPageRepository) GetTimeLine(userID int) *[]models.Page {
 	var user models.User
-	orm.First(&user, userID)
+	repo.db.First(&user, userID)
 
 	var follows []models.Follow
-	orm.Model(&user).Related(&follows)
+	repo.db.Model(&user).Related(&follows)
 
 	timeline := []models.Page{}
 	for _, follow := range follows {
 
 		if follow.FollowingType == "user" {
 			var followingUser models.User
-			orm.First(&followingUser, follow.FollowingId)
+			repo.db.First(&followingUser, follow.FollowingId)
 
 			var pages []models.Page
-			orm.Model(&followingUser).Related(&pages, "Pages")
+			repo.db.Model(&followingUser).Related(&pages, "Pages")
 
 			timeline = append(timeline, pages...)
 
 		} else if follow.FollowingType == "community" {
 			var followingCommunity models.Community
-			orm.First(&followingCommunity, follow.FollowingId)
+			repo.db.First(&followingCommunity, follow.FollowingId)
 
 			var pages []models.Page
-			orm.Model(&followingCommunity).Related(&pages, "Pages")
+			repo.db.Model(&followingCommunity).Related(&pages, "Pages")
 
 			timeline = append(timeline, pages...)
 		}
@@ -72,50 +71,44 @@ func (dbPageRepository) GetTimeLine(userID int) *[]models.Page {
 	return &timeline
 }
 
-func (dbPageRepository) GetByUserID(userID int) *[]models.Page {
-	orm := db.GetORM()
+func (repo dbPageRepository) GetByUserID(userID int) *[]models.Page {
 	pages := []models.Page{}
-	orm.Where("owner_id = ?", userID).Where("owner_type = ?", "users").Find(&pages)
+	repo.db.Where("owner_id = ?", userID).Where("owner_type = ?", "users").Find(&pages)
 	return &pages
 }
 
-func (dbPageRepository) GetByCommunityID(communityID int) *[]models.Page {
-	orm := db.GetORM()
+func (repo dbPageRepository) GetByCommunityID(communityID int) *[]models.Page {
 	pages := []models.Page{}
-	orm.Where("owner_id = ?", communityID).Where("owner_type = ?", "communities").Find(&pages)
+	repo.db.Where("owner_id = ?", communityID).Where("owner_type = ?", "communities").Find(&pages)
 	return &pages
 }
 
-func (dbPageRepository) GetByID(id int) *models.Page {
-	orm := db.GetORM()
+func (repo dbPageRepository) GetByID(id int) *models.Page {
 	page := models.Page{}
-	orm.First(&page, id)
+	repo.db.First(&page, id)
 	return &page
 }
 
-func (dbPageRepository) Create(name string, ownerID int, ownerType string) *models.Page {
-	orm := db.GetORM()
+func (repo dbPageRepository) Create(name string, ownerID int, ownerType string) *models.Page {
 	page := models.Page{Name: name, OwnerId: ownerID, OwnerType: ownerType}
-	orm.Create(&page)
+	repo.db.Create(&page)
 	return &page
 }
 
-func (dbPageRepository) Update(id int, name string, content string, image string, draft bool) *models.Page {
-	orm := db.GetORM()
+func (repo dbPageRepository) Update(id int, name string, content string, image string, draft bool) *models.Page {
 	var page models.Page
-	orm.First(&page, id)
+	repo.db.First(&page, id)
 
 	page.Name = name
 	page.Content = content
 	page.Image = image
 	page.Draft = draft
-	orm.Save(&page)
+	repo.db.Save(&page)
 	return &page
 }
 
-func (dbPageRepository) Delete(id int) {
-	orm := db.GetORM()
+func (repo dbPageRepository) Delete(id int) {
 	var page models.Page
-	orm.First(&page, id)
-	orm.Delete(&page)
+	repo.db.First(&page, id)
+	repo.db.Delete(&page)
 }

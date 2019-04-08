@@ -3,7 +3,8 @@ package repositories
 import (
 	"time"
 
-	"github.com/hubbdevelopers/hubb/db"
+	"github.com/jinzhu/gorm"
+
 	"github.com/hubbdevelopers/hubb/models"
 )
 
@@ -18,73 +19,68 @@ type UserRepository interface {
 	UpdateProfile(id int, name string, description string, homepage string, facebook string, twitter string, instagram string, birthday string) *models.User
 }
 
-func NewUserRepository() UserRepository {
-	return dbUserRepository{}
+func NewUserRepository(db *gorm.DB) UserRepository {
+	return dbUserRepository{db: db}
 }
 
-type dbUserRepository struct{}
+type dbUserRepository struct {
+	db *gorm.DB
+}
 
-func (dbUserRepository) GetAll() *[]models.User {
-	orm := db.GetORM()
+func (repo dbUserRepository) GetAll() *[]models.User {
 	users := []models.User{}
-	orm.Find(&users)
+	repo.db.Find(&users)
 	return &users
 }
 
-func (dbUserRepository) GetByID(id int) *models.User {
-	orm := db.GetORM()
+func (repo dbUserRepository) GetByID(id int) *models.User {
 	user := models.User{}
-	orm.First(&user, id)
+	repo.db.First(&user, id)
 	return &user
 }
 
-func (dbUserRepository) GetByUID(uid string) *models.User {
-	orm := db.GetORM()
+func (repo dbUserRepository) GetByUID(uid string) *models.User {
 	user := models.User{}
-	orm.Where("uid = ?", uid).First(&user)
-	return &user
-}
-func (dbUserRepository) GetByAccountID(accountID string) *models.User {
-	orm := db.GetORM()
-	user := models.User{}
-	orm.Where("account_id = ?", accountID).First(&user)
+	repo.db.Where("uid = ?", uid).First(&user)
 	return &user
 }
 
-func (dbUserRepository) Create(uid string) *models.User {
-	orm := db.GetORM()
+func (repo dbUserRepository) GetByAccountID(accountID string) *models.User {
+	user := models.User{}
+	repo.db.Where("account_id = ?", accountID).First(&user)
+	return &user
+}
+
+func (repo dbUserRepository) Create(uid string) *models.User {
 	user := models.User{UID: uid}
-	orm.Create(&user)
+	repo.db.Create(&user)
 	return &user
 }
 
-func (dbUserRepository) Initilize(id int, accountID string, name string) *models.User {
-	orm := db.GetORM()
+func (repo dbUserRepository) Initilize(id int, accountID string, name string) *models.User {
 	user := models.User{}
-	orm.First(&user, id)
+	repo.db.First(&user, id)
 
 	user.AccountId = accountID
 	user.Name = name
 
-	orm.Save(&user)
+	repo.db.Save(&user)
 	return &user
 }
 
-func (dbUserRepository) UpdateImage(id int, image string) *models.User {
-	orm := db.GetORM()
+func (repo dbUserRepository) UpdateImage(id int, image string) *models.User {
 	user := models.User{}
-	orm.First(&user, id)
+	repo.db.First(&user, id)
 
 	user.Image = image
 
-	orm.Save(&user)
+	repo.db.Save(&user)
 	return &user
 }
 
-func (dbUserRepository) UpdateProfile(id int, name string, description string, homepage string, facebook string, twitter string, instagram string, birthday string) *models.User {
-	orm := db.GetORM()
+func (repo dbUserRepository) UpdateProfile(id int, name string, description string, homepage string, facebook string, twitter string, instagram string, birthday string) *models.User {
 	user := models.User{}
-	orm.First(&user, id)
+	repo.db.First(&user, id)
 
 	if name != "" {
 		user.Name = name
@@ -116,6 +112,6 @@ func (dbUserRepository) UpdateProfile(id int, name string, description string, h
 		user.Birthday = &t
 	}
 
-	orm.Save(&user)
+	repo.db.Save(&user)
 	return &user
 }

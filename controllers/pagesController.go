@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 
+	"github.com/hubbdevelopers/hubb/db"
 	"github.com/hubbdevelopers/hubb/repositories"
 
 	"strconv"
@@ -16,7 +17,7 @@ func GetPages(c *gin.Context) {
 	userID := c.Query("userid")
 	communityID := c.Query("communityid")
 
-	repo := repositories.NewPageRepository()
+	repo := repositories.NewPageRepository(db.GetORM())
 
 	var pages *[]models.Page
 	if userID != "" {
@@ -46,7 +47,7 @@ func GetPages(c *gin.Context) {
 
 func GetRecentPages(c *gin.Context) {
 
-	repo := repositories.NewPageRepository()
+	repo := repositories.NewPageRepository(db.GetORM())
 	pages := repo.GetRecentPages()
 
 	c.JSON(200, gin.H{
@@ -63,7 +64,7 @@ func GetTimeline(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewPageRepository()
+	repo := repositories.NewPageRepository(db.GetORM())
 	pages := repo.GetTimeLine(userID)
 
 	c.JSON(200, gin.H{
@@ -79,7 +80,7 @@ func GetPage(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	repo := repositories.NewPageRepository()
+	repo := repositories.NewPageRepository(db.GetORM())
 	page := repo.GetByID(id)
 	c.JSON(200, gin.H{
 		"data": page,
@@ -100,7 +101,7 @@ func CreatePage(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewPageRepository()
+	repo := repositories.NewPageRepository(db.GetORM())
 	page := repo.Create(json.Name, json.OwnerID, json.OwnerType)
 	c.JSON(200, gin.H{
 		"data": page,
@@ -115,7 +116,7 @@ func DeletePage(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewPageRepository()
+	repo := repositories.NewPageRepository(db.GetORM())
 	repo.Delete(id)
 
 	c.JSON(200, gin.H{
@@ -145,7 +146,7 @@ func UpdatePage(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewPageRepository()
+	repo := repositories.NewPageRepository(db.GetORM())
 	page := repo.Update(id, json.Name, json.Content, json.Image, json.Draft)
 
 	c.JSON(200, gin.H{

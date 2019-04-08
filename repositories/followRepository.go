@@ -3,6 +3,7 @@ package repositories
 import (
 	"github.com/hubbdevelopers/hubb/db"
 	"github.com/hubbdevelopers/hubb/models"
+	"github.com/jinzhu/gorm"
 )
 
 type FollowRepository interface {
@@ -15,44 +16,41 @@ type FollowRepository interface {
 	DeleteFollowCommunity(userID int, followingCommunityID int)
 }
 
-func NewFollowRepository() FollowRepository {
-	return dbFollowRepository{}
+func NewFollowRepository(db *gorm.DB) FollowRepository {
+	return dbFollowRepository{db: db}
 }
 
-type dbFollowRepository struct{}
+type dbFollowRepository struct {
+	db *gorm.DB
+}
 
-func (dbFollowRepository) GetFollowingsByUserID(userID int) *[]models.Follow {
-	orm := db.GetORM()
+func (repo dbFollowRepository) GetFollowingsByUserID(userID int) *[]models.Follow {
 	follows := []models.Follow{}
-	orm.Where("user_id = ?", userID).Find(&follows)
+	repo.db.Where("user_id = ?", userID).Find(&follows)
 	return &follows
 }
 
-func (dbFollowRepository) GetFollowersByUserID(userID int) *[]models.Follow {
-	orm := db.GetORM()
+func (repo dbFollowRepository) GetFollowersByUserID(userID int) *[]models.Follow {
 	follows := []models.Follow{}
-	orm.Where("following_id = ?", userID).Where("following_type = ?", "user").Find(&follows)
+	repo.db.Where("following_id = ?", userID).Where("following_type = ?", "user").Find(&follows)
 	return &follows
 }
 
-func (dbFollowRepository) GetFollowersByCommunityID(communityID int) *[]models.Follow {
-	orm := db.GetORM()
+func (repo dbFollowRepository) GetFollowersByCommunityID(communityID int) *[]models.Follow {
 	follows := []models.Follow{}
-	orm.Where("following_id = ?", communityID).Where("following_type = ?", "user").Find(&follows)
+	repo.db.Where("following_id = ?", communityID).Where("following_type = ?", "user").Find(&follows)
 	return &follows
 }
 
-func (dbFollowRepository) CreateFollowUser(userID int, followingUserID int) *models.Follow {
-	orm := db.GetORM()
+func (repo dbFollowRepository) CreateFollowUser(userID int, followingUserID int) *models.Follow {
 	follow := models.Follow{UserId: userID, FollowingId: followingUserID, FollowingType: "user"}
-	orm.Create(&follow)
+	repo.db.Create(&follow)
 	return &follow
 }
 
-func (dbFollowRepository) CreateFollowCommunity(userID int, followingCommunityID int) *models.Follow {
-	orm := db.GetORM()
+func (repo dbFollowRepository) CreateFollowCommunity(userID int, followingCommunityID int) *models.Follow {
 	follow := models.Follow{UserId: userID, FollowingId: followingCommunityID, FollowingType: "community"}
-	orm.Create(&follow)
+	repo.db.Create(&follow)
 	return &follow
 }
 
@@ -63,9 +61,8 @@ func (dbFollowRepository) DeleteFollowUser(userID int, followingUserID int) {
 	orm.Delete(&follow)
 }
 
-func (dbFollowRepository) DeleteFollowCommunity(userID int, followingCommunityID int) {
-	orm := db.GetORM()
+func (repo dbFollowRepository) DeleteFollowCommunity(userID int, followingCommunityID int) {
 	follow := models.Follow{}
-	orm.Where("user_id = ?", userID).Where("following_id = ?", followingCommunityID).Where("following_type = ?", "community").First(&follow)
-	orm.Delete(&follow)
+	repo.db.Where("user_id = ?", userID).Where("following_id = ?", followingCommunityID).Where("following_type = ?", "community").First(&follow)
+	repo.db.Delete(&follow)
 }

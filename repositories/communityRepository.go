@@ -1,8 +1,8 @@
 package repositories
 
 import (
-	"github.com/hubbdevelopers/hubb/db"
 	"github.com/hubbdevelopers/hubb/models"
+	"github.com/jinzhu/gorm"
 )
 
 type CommunityRepository interface {
@@ -14,54 +14,51 @@ type CommunityRepository interface {
 	Delete(id int)
 }
 
-func NewCommunityRepository() CommunityRepository {
-	return dbCommunityRepository{}
+func NewCommunityRepository(db *gorm.DB) CommunityRepository {
+	return dbCommunityRepository{db: db}
 }
 
-type dbCommunityRepository struct{}
+type dbCommunityRepository struct {
+	db *gorm.DB
+}
 
-func (dbCommunityRepository) GetAll() *[]models.Community {
-	orm := db.GetORM()
+func (repo dbCommunityRepository) GetAll() *[]models.Community {
 	communities := []models.Community{}
-	orm.Find(&communities)
+	repo.db.Find(&communities)
 	return &communities
 }
 
-func (dbCommunityRepository) GetByUserID(userID int) *[]models.Community {
-	orm := db.GetORM()
+func (repo dbCommunityRepository) GetByUserID(userID int) *[]models.Community {
 	communities := []models.Community{}
 	communityMembers := []models.CommunityMember{}
 	// TODO リレーションを使う
-	orm.Where("user_id = ?", userID).Find(&communityMembers)
+	repo.db.Where("user_id = ?", userID).Find(&communityMembers)
 
 	var communityIds []int
 	for _, value := range communityMembers {
 		communityIds = append(communityIds, value.CommunityId)
 	}
 
-	orm.Where("id in (?)", communityIds).Find(&communities)
+	repo.db.Where("id in (?)", communityIds).Find(&communities)
 	return &communities
 }
 
-func (dbCommunityRepository) GetByName(communityName string) *[]models.Community {
-	orm := db.GetORM()
+func (repo dbCommunityRepository) GetByName(communityName string) *[]models.Community {
 	communities := []models.Community{}
-	orm.Where("name = ?", communityName).Find(&communities)
+	repo.db.Where("name = ?", communityName).Find(&communities)
 	return &communities
 }
 
-func (dbCommunityRepository) GetByID(id int) *models.Community {
-	orm := db.GetORM()
+func (repo dbCommunityRepository) GetByID(id int) *models.Community {
 	community := models.Community{}
-	orm.First(&community, id)
+	repo.db.First(&community, id)
 	return &community
 }
 
-func (dbCommunityRepository) Create(userID int, name string) *models.Community {
-	orm := db.GetORM()
-	tx := orm.Begin()
+func (repo dbCommunityRepository) Create(userID int, name string) *models.Community {
+	tx := repo.db.Begin()
 	community := models.Community{Name: name}
-	if err := orm.Create(&community).Error; err != nil {
+	if err := repo.db.Create(&community).Error; err != nil {
 		tx.Rollback()
 		return nil
 	}
@@ -83,9 +80,8 @@ func (dbCommunityRepository) Create(userID int, name string) *models.Community {
 	return &community
 }
 
-func (dbCommunityRepository) Delete(id int) {
-	orm := db.GetORM()
+func (repo dbCommunityRepository) Delete(id int) {
 	var community models.Community
-	orm.First(&community, id)
-	orm.Delete(&community)
+	repo.db.First(&community, id)
+	repo.db.Delete(&community)
 }

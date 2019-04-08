@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/hubbdevelopers/hubb/db"
 	"github.com/hubbdevelopers/hubb/repositories"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +18,7 @@ func GetUserFollowings(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewFollowRepository()
+	repo := repositories.NewFollowRepository(db.GetORM())
 	followings := repo.GetFollowingsByUserID(userID)
 
 	c.JSON(200, gin.H{
@@ -33,7 +34,7 @@ func GetUserFollowers(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewFollowRepository()
+	repo := repositories.NewFollowRepository(db.GetORM())
 	followers := repo.GetFollowersByUserID(userID)
 
 	c.JSON(200, gin.H{
@@ -55,7 +56,7 @@ func FollowUser(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewFollowRepository()
+	repo := repositories.NewFollowRepository(db.GetORM())
 	follow := repo.CreateFollowUser(userID, followingID)
 
 	c.JSON(200, gin.H{
@@ -77,7 +78,7 @@ func UnfollowUser(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewFollowRepository()
+	repo := repositories.NewFollowRepository(db.GetORM())
 	repo.DeleteFollowUser(userID, followingID)
 
 	c.JSON(200, gin.H{
@@ -99,7 +100,7 @@ func FollowCommunity(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewFollowRepository()
+	repo := repositories.NewFollowRepository(db.GetORM())
 	follow := repo.CreateFollowCommunity(userID, followingID)
 
 	c.JSON(200, gin.H{
@@ -121,7 +122,7 @@ func UnfollowCommunity(c *gin.Context) {
 		return
 	}
 
-	repo := repositories.NewFollowRepository()
+	repo := repositories.NewFollowRepository(db.GetORM())
 	repo.DeleteFollowCommunity(userID, followingID)
 
 	c.JSON(200, gin.H{
